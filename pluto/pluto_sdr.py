@@ -349,7 +349,7 @@ class PlutoSdr(object):
         iq = np.round((2**(no_bits-1))*data.view(FLOAT)).astype(np.int16)
         return iq
     
-    def writeTx(self, samples):  #, raw=False): use samples.dtype
+    def writeTx(self, samples,cyclic=False):  #, raw=False): use samples.dtype
         """write to the Tx buffer and make it cyclic"""
         if self._tx_buff is not None:
             self._tx_buff = None               # turn off any previous signal
@@ -366,7 +366,8 @@ class PlutoSdr(object):
         # samples are 2 bytes each with interleaved I/Q value (no_samples = len/4)
         self.tx_state = self.TX_DMA                 # enable the tx channels
         try:  # create a cyclic iio buffer for continuous tx output
-            self._tx_buff = iio.Buffer(self.dac, len(data)//4, True)
+            self._tx_buff = iio.Buffer(device=self.dac, samples_count=len(data)//4, cyclic=cyclic)  # Device, Count, Cyclic
+            #self._tx_buff = iio.Buffer(device=self.dac, samples_count=len(data)//4, cyclic=False)  # Device, Count, Cyclic
             count = self._tx_buff.write(data)
             logging.debug(str(count)+' samples transmitted')
             self._tx_buff.push()
